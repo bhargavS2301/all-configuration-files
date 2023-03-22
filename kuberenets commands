@@ -1,0 +1,82 @@
+kubectl port-forward --address 0.0.0.0 first 8888:80 >>>>>>> port maping
+kubectl get ns >>>>>>>> namespace list
+kubectl get pods -n kube-system >>>>>>>>> find pods in particuler namespace
+kubectl delete pod first >>>>>>> delete the pod
+kubectl delete pods --all >>>>>> delete all the pods
+kubectl namespace create hello >>>>>> create the namespace
+kubectl config set-context myspace --namespace=myspace --user=kubernets-admin --cluster=kubernets  >>>>>> set  permisions to the namespace
+kubectl config set-context –current –namespace=myspace  >>>>>. set defult namespace which created
+kubectl get pods -o wide >>>>>>> it displays the information about pods
+kubectl get node -o wide >>>>>>> it displays the information about nodes
+kubectl run first --image=nginx >>>>>> it creats the pod by command
+kubectl taint nodes desktop-od7ikfq node-role.kubernetes.io/control-plane:NoSchedule- >>>>>> remove the taint from master
+kubectl apply -f k8s.yaml >>>>>it creats the pod by manifestfile
+kubectl get pods --all-namespaces >>>>>>> it shows all namespaces
+kubectl get quota -n namespace (name) >>>>> it shows the ressource quota
+kubectl label node (node name) node=node name >>>>> creating label
+kubectl get nodes --show-labels >>>> to show labels
+kubectl expose deployment web-app --type=ClusterIp --port=80  (communication b/w pods using cluster ip)
+kubectl expose deployment web-app --type=NodePort --port=80  (communication b/w pods using Nodeport)
+multi containers in single pod >>>>>>> to communicate two containers in pod >>>>
+      kubectl exec -it podname -c (container name) -- /bin/bash
+      apt update
+      apt install net-tools -y
+      netstat -tulp
+      
+kubectl logs -f (pod name) -c (container name) >>>>> checking logs of containers
+
+if you want namespace bind with particuler label
+cd /etc/kubernetes/manifests
+vi kube-apiserver.yaml
+--enable-admission-plugins=NodeRestriction,PodNodeSelector  <<<<< add that line
+after that edit the namespace
+kubectl edit namesapce (namespace name)
+add line under metadata
+annotations:
+  scheduler.alpha.kubernetes.io/node-selector: node=worker-2
+---------------------------------------------
+
+creating service for deployment by command :--
+kubectl expose deployment (deployment name) --name (deployment)-svc
+
+----------------------------------
+to check the k8s logs >>> 
+kubectl logs (podname) -c (container name)
+
+
+
+---------------------------------------------------------------
+
+node port range:--
+30000 to 32767
+
+------------------------------
+
+rollback command to previous version
+
+kubectl rollback undo deployment (deployment name)
+
+
+
+k8s trobuleshoot pods:-
+to edit the pod:-
+kubectl edit pod (podname)
+
+way -----------
+kubectl get pods (podname) -o yaml
+------------
+
+
+kubernets deployment roolback commands:-
+
+kubectl rollout undo deployment (deploymentname)
+
+
+how to pause deployment without affecting to deployment:--
+
+
+kubectl rollout pause deployment (deploymentname)
+
+how to resume deployment:-
+
+kubectl rollout resume deployment (deploymentname)
