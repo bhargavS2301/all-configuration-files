@@ -1,0 +1,45 @@
+pipeline {
+    agent any
+    environment{
+        PATH ="/opt/apache-maven-3.9.1/bin:$PATH"
+    }
+       options {
+  buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '3')
+  timestamps()
+}
+    stages {
+        stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+        stage('buld') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('buld the image') {
+            steps {
+                sh 'docker build -t first:latest .'
+                sh 'docker tag first bharath0812/first:latest'
+            }
+        } 
+        stage('push image to dockerhub') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'docker')]) {
+    sh 'docker login -u bharath0812 -p ${docker}'
+}
+            }
+        }
+        
+          stage('run on remote server') {
+            steps {
+                sshagent(['ssh']) {
+        
+    sh "ssh -o StrictHostKeyChecking=no ubuntu@13.233.54.106 docker run --name newcontainer -d -p 8082:8080 bharath0812/first"
+                
+            }
+        }
+    }
+}
+}
