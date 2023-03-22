@@ -1,0 +1,6 @@
+firt craete the iam user >>> give admin permision to user
+next create role to eks cluster >>> give policy eks cluster amazon eks cluster policy
+create role for nodes >>>give policy > amazoneksworkernodepolicy, amazonec2containerregistryreadonly, amazoneks-cni-policy
+
+connecting local to eks cluster:--
+aws eks update-kubeconfig --name (cluster name) --region us-east-1
