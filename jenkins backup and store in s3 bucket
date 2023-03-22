@@ -1,0 +1,18 @@
+first to take backup of jenkins>>
+
+$ tar -zcvf jenkins-backup.tar.gz /var/lib/jenkins/
+next create iam role with full access s3 storage and attech to jenkins instance
+
+store to s3bucket which we copied
+$ aws s3 cp jenkins-backup.tar.gz s3://s3buc0812/jenkins-backup.tar.gz
+
+next create new instance and add iamrole with s3 access
+copy from s3 to local
+
+$ aws s3 cp s3://s3buc0812/jenkins-backup.tar.gz jenkins-backup.tar.gz
+to restore jenkins we should delete exist directory
+
+$ rm -rf /var/lib/jenkins/
+to restore jenkins backup data
+
+$ tar -zxvf jenkins-backup.tar.gz -C /
