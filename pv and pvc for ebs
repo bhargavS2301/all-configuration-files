@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: aws-pv
+  labels:
+    type: aws-pv
+spec:
+  capacity:
+    storage: 3Gi
+  accessModes:
+    - ReadWriteOnce
+  awsElasticBlockStore:
+    volumeID: <YOUR EBS VOLUME ID HERE>
+    fsType: xfs
+    ------------------------------------
+    pvc:--
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: aws-pvc
+    labels:
+       type: aws-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+resources:
+  requests:
+    storage: 3Gi
+   selector:
+    matchLabels:
+      type: aws-pv
+      ------------------------------------------------
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis-cloud
+spec:
+  volumes:
+    - name: cloud-storage
+      persistentVolumeClaim:
+        claimName: aws-pvc
+  containers:
+    - name: redis
+      image: redis
+      volumeMounts:
+        - name: cloud-storage
+          mountPath: /cloud/data
