@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+     environment {
+         PATH ="/opt/apache-maven-3.9.1/bin:$PATH"
+        AWS_ACCOUNT_ID="261097301806"
+        AWS_DEFAULT_REGION="ap-south-1"
+        IMAGE_REPO_NAME="firstrepo"
+        IMAGE_TAG="v1"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    }
+
+    stages {
+         stage('Logging into AWS ECR') {
+            steps {
+                script {
+                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+                }
+                 
+            }
+        }
+          stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+          stage('maven build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('build the image') {
+            steps {
+                sh 'docker build -t firstrepo .'
+                sh 'docker tag firstrepo:latest 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+            }
+        }
+        
+           stage('push image to ecr') {
+            steps {
+            sh 'docker push 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+            }
+        }  
+    }
+}
