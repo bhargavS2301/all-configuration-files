@@ -1,0 +1,35 @@
+
+@Library("sharelib") _
+pipeline {
+    agent any
+    options{
+         buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '30', numToKeepStr: '2')
+         timestamps()
+    }
+    environment{
+        PATH="/opt/apache-maven-3.9.1/bin:$PATH"
+    }
+
+    stages {
+        stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+         stage('generate artfact') {
+            steps {
+               script{
+                   build()
+               } 
+                
+            }
+        }
+         stage('upload artfact to s3') {
+            steps {
+                script{
+                    s3upload()
+                }
+            }
+         }
+    }
+}
