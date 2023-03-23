@@ -1,0 +1,23 @@
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/apache-maven-3.9.1/bin:$PATH"
+    }
+    stages {
+        stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+         stage('build package') {
+            steps {
+                sh 'mvn clean package'
+            }
+        } 
+          stage('war file upload to s3 bucket') {
+            steps {
+                sh 'aws s3 cp ${WORKSPACE}/target/*.war s3://artwar'
+            }
+        } 
+    }
+}
