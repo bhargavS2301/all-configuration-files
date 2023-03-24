@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'BRANCH', choices: ['master', 'test', 'run-hello-world'], description: 'choose which branch u want to build')
+    }
+environment{
+    PATH="/opt/apache-maven-3.9.1/bin:$PATH"
+}
+    stages {
+        stage('github') {
+            steps {
+                git branch: "${params.BRANCH}", url: 'https://github.com/jenkinsci/git-parameter-plugin.git'
+            }
+        }
+         stage('Hello') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+    }
+}
