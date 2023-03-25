@@ -1,0 +1,8 @@
+if you want to back from stageing area 
+git rm --cached filename.txt
+----
+
+user creation in git
+
+git config --global user.name "bharath"
+git config --global user.email "bh@gmail.com
