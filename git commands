@@ -6,3 +6,8 @@ user creation in git
 
 git config --global user.name "bharath"
 git config --global user.email "bh@gmail.com
+
+git tag commands:-
+
+git tag (tagname)<<< to create tag
+git push origin (tagname) tp push code which we take
