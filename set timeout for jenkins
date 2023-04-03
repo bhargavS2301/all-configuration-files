@@ -1,0 +1,19 @@
+pipeline {
+    agent {
+        label 'agent_name'
+    }
+
+    stages {
+        stage('Stage_name') {
+            steps {
+                timeout(time: 3, unit: 'HOURS') {
+                    sh ' ... '
+                    echo '...'
+                    // ...
+                }
+
+                // ...
+            }
+        }
+    }
+}
