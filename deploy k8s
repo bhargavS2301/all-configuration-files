@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+    
+   environment {
+        AWS_ACCOUNT_ID="261097301806"
+        AWS_DEFAULT_REGION="ap-south-1"
+        IMAGE_REPO_NAME="firstrepo"
+        IMAGE_TAG="v1"
+        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    }
+    stages {
+        stage('Logging into AWS ECR') {
+            steps {
+                script {
+                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+                }
+                 
+            }
+        }
+        stage('github') {
+            steps {
+                git branch: 'main', url: 'https://github.com/bharah08/webapp.git'
+            }
+        }
+          stage('maven build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+          stage('build docker image') {
+            steps {
+                sh 'docker build -t firstrepo .'
+                sh 'docker tag firstrepo:latest 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+            }
+        }
+          stage('push to ecr') {
+            steps {
+                sh 'docker push 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+            }
+        }
+          stage('deploy k8s') {
+            steps {
+               kubernetesDeploy (configs: 'deploy.yaml', kubeconfigId: 'kuber')
+            }
+        }
+          
+    }
+}
