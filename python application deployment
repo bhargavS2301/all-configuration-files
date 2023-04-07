@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+
+  name: python-deployment
+
+  labels:
+
+    app: python
+
+spec:
+
+  replicas: 3
+
+  selector:
+
+    matchLabels:
+
+      app: python
+
+  template:
+
+    metadata:
+
+      labels:
+
+        app: python
+
+    spec:
+
+      containers:
+
+      - name: pythonweb
+        image: bharath0812/haharepo
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: pythonservice
+spec:
+ type: NodePort
+ selector:
+   app: python
+ ports:
+   - port: 5000
+     targetPort: 5000
+     nodePort: 32140
+     protocol: TCP
