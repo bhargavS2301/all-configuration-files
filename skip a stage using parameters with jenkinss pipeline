@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+      parameters {
+        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+    }
+
+    stages {
+        stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+         stage('mavne') {
+             when { expression { params.skip_test != false } }
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+         stage('nexus') {
+             when { expression { params.skip_test != false } }
+            steps {
+               nexusArtifactUploader artifacts: [[artifactId: 'LoginWebApp', classifier: '', file: 'target/LoginWebApp-1.war', type: 'war']], credentialsId: 'nexus', groupId: 'com.devops4solutions', nexusUrl: '3.111.157.50:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'my-nex', version: '1'
+            }
+        }
+        stage('build docker image'){
+            steps{
+                sh 'docker build -t bharath0812/haharepo:1.0.0 .'
+                
+            }
+        }
+        stage('push repo'){
+            steps{
+                withCredentials([string(credentialsId: 'docker', variable: 'docker')]) {
+    sh 'docker login -u bharath0812 -p ${docker}'
+    sh 'docker push bharath0812/haharepo:1.0.0'
+}
+                
+            }
+        }
+         stage('deploy on remote server') {
+            steps {
+                sshagent(['ssh']) {
+    sh 'ssh -o StrictHostKeyChecking=no ubuntu@3.111.157.50 docker run -itd --name hello bharath0812/haharepo:1.0.0'
+}
+            }
+        }
+    }
+}
