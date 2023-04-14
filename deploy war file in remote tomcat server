@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+    stages {
+        stage('github') {
+            steps {
+                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+            }
+        }
+         stage('maven build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+         stage('deploy on tomcat') {
+            steps {
+                sshagent(['tomcat']) {
+   sh "scp -o StrictHostKeyChecking=no target/LoginWebApp-1.war ubuntu@3.108.236.17:/opt/tomcat/apache-tomcat-9.0.73/webapps"
+}
+               
+            }
+        }
+    }
+}
