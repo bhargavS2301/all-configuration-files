@@ -1,0 +1,4 @@
+Host 13.233.190.236
+    HostName 13.233.190.236
+    User ubuntu
+    IdentityFile "C:\Users\lbhar\Downloads\hello.pem"
