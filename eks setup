@@ -3,4 +3,24 @@ next create role to eks cluster >>> give policy eks cluster amazon eks cluster p
 create role for nodes >>>give policy > amazoneksworkernodepolicy, amazonec2containerregistryreadonly, amazoneks-cni-policy
 
 connecting local to eks cluster:--
-aws eks update-kubeconfig --name (cluster name) --region us-east-1
+need one ec2 instance to connect
+$ aws eks update-kubeconfig --name (cluster name) --region us-east-1
+>> install aws cli :--
+
+$ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+$ unzip awscliv2.zip
+$ sudo ./aws/install
+$ aws --version
+
+
+>> install kubectl :--
+$ curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.26.2/2023-03-17/bin/linux/amd64/kubectl
+$ openssl sha1 -sha256 kubectl
+$ chmod +x ./kubectl
+$ mkdir -p $HOME/bin && cp ./kubectl $HOME/bin/kubectl && export PATH=$PATH:$HOME/bin
+$ echo 'export PATH=$PATH:$HOME/bin' >> ~/.bashrc
+$ kubectl version --short --client
+----------------------------------------------------------------------------------------------
+
+
+
