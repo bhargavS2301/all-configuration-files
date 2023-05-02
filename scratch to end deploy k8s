@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+    tools{
+        maven 'maven'
+    }
+ parameters {
+        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+    }
+    stages {
+        stage('github') {
+            steps {
+                git branch: 'main', url: 'https://github.com/bharah08/webapp.git'
+            }
+        }
+       stage('maven build') {
+           when { expression { params.skip_test != false } }
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+         stage('sonarqube scan with code') {
+             when { expression { params.skip_test != false } }
+            steps {
+              withSonarQubeEnv('sonar') {
+                sh "mvn clean verify sonar:sonar \
+  -Dsonar.projectKey=webapp \
+  -Dsonar.host.url=http://13.126.123.50:9000 \
+  -Dsonar.login=sqp_41bc5786fbb3eab4a89c0044235c1aef10ced5e0"
+              }
+            }
+          } 
+          stage("Quality Gate") {
+              when { expression { params.skip_test != false } }
+            steps {
+              timeout(time: 5, unit: 'MINUTES') {
+                waitForQualityGate abortPipeline: true
+              }
+            }
+          }
+          
+           stage('artifact upload to nexus') {
+               when { expression { params.skip_test != false } }
+            steps {
+               nexusArtifactUploader artifacts: [[artifactId: '01-maven-web-app', classifier: '', file: 'target/01-maven-web-app.war', type: 'war']], credentialsId: 'sonarnexus', groupId: 'in.ashokit', nexusUrl: '3.110.120.118:8081', nexusVersion: 'nexus3', protocol: 'http', repository: 'newrepo', version: '2.6.6'
+            }
+        }
+          stage('docker build image') {
+              when { expression { params.skip_test != false } }
+            steps {
+                sh 'docker build -t bharath0812/yesapp:1.0 .'
+            }
+        }
+         stage('push image to dockerhub') {
+             when { expression { params.skip_test != false } }
+            steps {
+                withCredentials([string(credentialsId: 'docker', variable: 'docker')]) {
+    sh 'docker login -u bharath0812 -p ${docker}'
+    sh 'docker push bharath0812/yesapp:1.0'
+}
+            }
+        }
+         stage('deploy k8s') {
+            steps {
+                 kubernetesDeploy (configs: 'deploy.yaml', kubeconfigId: 'k8s')
+            }
+        }
+    }
+}
