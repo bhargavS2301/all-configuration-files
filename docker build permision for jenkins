@@ -1,0 +1,4 @@
+$ useradd jenkins
+$ usermod -aG docker jenkins
+$ usermod -aG root jenkins
+$ chmod 777 /var/run/docker.sock
