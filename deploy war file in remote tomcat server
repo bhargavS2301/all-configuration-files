@@ -1,26 +1,57 @@
+
+
+#####
+before deploy we need to give permision to target server
+where tomcat folder there give permision, for example  >   $ sudo chmod -R o+w tomcat9/
+
+
+#########
 pipeline {
     agent any
     tools{
         maven 'maven'
     }
+
     stages {
-        stage('github') {
+        stage('checkout') {
             steps {
-                git 'https://github.com/bharah08/CI-CD-using-Docker.git'
+                checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/bharah08/webapp.git']])
             }
         }
-         stage('maven build') {
+         stage('code compile') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn compile'
             }
         }
-         stage('deploy on tomcat') {
+         stage('unit testing') {
             steps {
-                sshagent(['tomcat']) {
-   sh "scp -o StrictHostKeyChecking=no target/LoginWebApp-1.war ubuntu@3.108.236.17:/opt/tomcat/apache-tomcat-9.0.73/webapps"
+                sh 'mvn test'
+            }
+        }
+         stage('build code') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+         stage('deploy on test server') {
+            steps {
+                sshagent(['test-server']) {
+    sh 'scp -o StrictHostKeyChecking=no target/01-maven-web-app.war ubuntu@13.235.45.122:/var/lib/tomcat9/webapps/01-maven-web-app.war'
 }
-               
             }
         }
+       stage('Continuous testing') {
+           steps{
+    sh 'echo "Testing Complete  || Testing Team Write Script So don\'t Warry "'
+           }
+    } 
+    stage('deploy prod'){
+        steps{
+            input 'waiting for approvel from head'
+            sshagent(['prod-server']) {
+    sh 'scp -o StrictHostKeyChecking=no target/01-maven-web-app.war ubuntu@13.232.24.139:/var/lib/tomcat9/webapps/01-maven-web-app.war'
+}
+        }
+    }
     }
 }
