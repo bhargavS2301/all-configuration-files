@@ -4,3 +4,7 @@ next
 $ mkfs -t xfs /dev/xvdf
 $ mkdir mydir
 $ mount /dev/xvdf /mydir/
+-----------
+how to unmount storage
+umount /dev/xvdf
+
