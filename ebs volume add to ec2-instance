@@ -1,5 +1,5 @@
 after add ebs volume to ec2 instance, we need to mount the volume in instance 
-> to check disk atteched or not       $ fdisk -l
+> to check disk atteched or not       $ lsblk
 next
 $ mkfs -t xfs /dev/xvdf
 $ mkdir mydir
