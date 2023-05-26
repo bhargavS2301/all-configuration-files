@@ -1,0 +1,173 @@
+Step 1 — Create a VPC
+VPC (Virtual Private Cloud) is a secure and isolated private cloud hosted within a public cloud environment. With VPC, you can set up subnets, IP ranges, and also define rules for your services.
+
+To create a VPC, open up your terminal and enter the following command:
+$ aws ec2 create-vpc --cidr-block 10.0.0.0/16
+Your terminal should respond with a bunch of information about this new VPC you’ve just created. Part of this information should be the VPC id.
+
+You can decide to add a tag to your VPC to easily identify it once you start having multiple VPCs, to do this, run the command below:
+$ aws ec2 create-tags --resources <vpc-id> --tags Key=<tag-key>,Value=<tag-value>
+cidr stands for Classless Inter-Domain Routing.
+
+1
+
+ 
+
+Step 2 - Create public and private subnets
+Subnet (Subnetwork) splits large networks into a group of smaller interconnected networks in order to reduce traffic congestion and increase routing efficiency.
+
+We are going to create two subnets, a private and public subnet, then attach a tag to each one to differentiate between them.
+
+To create the public subnet, run the following command:
+$ aws ec2 create-subnet --vpc-id <vpc-id> --cidr-block 10.0.1.0/24
+Again, your terminal should respond with information about the subnet you’ve just made. Pick out the subnet id and add a tag to it just as we’ve done for the VPC itself:
+$ aws ec2 create-tags --resources <subnet-id> --tags Key=<tag-key>,Value=<tag-value>
+And for the private subnet:
+$ aws ec2 create-subnet --vpc-id <vpc-id> --cidr-block 10.0.2.0/24
+And for the tag:
+$ aws ec2 create-tags --resources <subnet-id> --tags Key=<tag-key>,Value=<tag-value>
+It’s also important to mention here that the commands for creating public and private subnets only differ in the --cidr-block parameter, so be sure to pay attention to that as well.
+
+2
+
+ 
+
+Step 3 - Create internet gateway for the VPC
+Internet gateway (IGW) is simply used to connect a VPC to the internet so that the VPC resources can access the internet and be accessed over the internet.
+
+To create an internet gateway, use the following command:
+aws ec2 create-internet-gateway
+If you want, you can add a tag to the internet gateway you’ve just created the way we’ve done it for all other resources:
+aws ec2 create-tags --resources <internet-gateway-id> --tags Key=<tag-key>,Value=<tag-value>
+Then attach the internet gateway to the VPC.
+aws ec2 attach-internet-gateway --internet-gateway-id <internet-gateway-id> --vpc-id <vpc-id>
+3
+
+ 
+
+Step 4 - Create an elastic IP address for NAT gateway
+An elastic IP address is a reserved IPv4 public address that can be assigned to an instance in order to enable communication with the internet.
+
+In order for us to create a NAT gateway, we’ll need an elastic IP address. Run the following command to create an elastic IP address.
+aws ec2 allocate-address --domain vpc
+4
+
+ 
+
+Step 5 - Create a NAT gateway
+A NAT (Network Address Translation) Gateway is used to enable instances in a private subnet to connect to the internet or other AWS services but prevents the internet from connecting to those instances.
+
+To create a NAT gateway, we need to add the public subnet in which the NAT gateway will reside and also associate the elastic IP address with the NAT gateway. Run the following command to create a NAT gateway.
+aws ec2 create-nat-gateway --subnet-id <public-subnet-id> --allocation-id <elastic-ip-address-id>
+Then add a tag to the NAT gateway.
+aws ec2 create-tags --resources <nat-gateway-id> --tags Key=<tag-key>,Value=<tag-value>
+5
+
+ 
+
+Step 6 - Create a route table for each subnet
+A route table contains a set of rules that is used to determine where the network traffic from the subnets or internet gateway will be directed.
+
+Now, we need two route tables, one for each subnet. The route tables would be created the same way but different tags would be used for each of them.
+aws ec2 create-route-table --vpc-id <vpc-id>
+Add a tag to each of the route tables.
+
+You can tag the first route table as public.
+aws ec2 create-tags --resources <first-route-table-id> --tags Key=<tag-key>,Value=<tag-value>
+Then tag the second route table as private.
+aws ec2 create-tags --resources <second-route-table-id> --tags Key=<tag-key>,Value=<tag-value>
+6
+
+ 
+
+Step 7 - Create routes
+We’ll now be creating routes for the previously created route tables.
+
+We’ll first attach the route table created for the public subnet to the internet gateway. The route matches all IPv4 traffic (0.0.0.0/0) and routes it to the specified Internet gateway.
+aws ec2 create-route --route-table-id <public-route-table-id> --destination-cidr-block 0.0.0.0/0 --gateway-id <internet-gateway-id>
+Then attach the route table created for the private subnet to the NAT gateway. The route matches all IPv4 traffic (0.0.0.0/0) and routes it to the specified NAT gateway.
+aws ec2 create-route --route-table-id <private-route-table-id> --destination-cidr-block 0.0.0.0/0 --gateway-id <nat-gateway-id>
+7
+
+ 
+
+Step 8 - Associate route table to subnet
+Associate the public route table to the public subnet.
+aws ec2 associate-route-table --route-table-id <public-route-table-id> --subnet-id <public-subnet-id>
+Associate the private route table to the private subnet.
+aws ec2 associate-route-table --route-table-id <private-route-table-id> --subnet-id <private-subnet-id>
+8
+
+ 
+
+Step 9 - Create a security group for the VPC
+Security groups serve as a virtual firewall for instances to control incoming and outgoing traffic. Inbound rules control the incoming traffic to the instance, and outbound rules control the outgoing traffic from the instance.
+
+We can create a security group with the following command:
+aws ec2 create-security-group --group-name <security-group-name> --description "<description>" --vpc-id <vpc-id>
+Add a tag to the security group.
+aws ec2 create-tags --resources <security-group-id> --tags Key=<tag-key>,Value=<tag-value>
+Then we specify rules for the security group created. port 80 allows inbound HTTP access from all IPv4 addresses and port 22 allows inbound SSH access to instances from IPv4 IP addresses in your network.
+aws ec2 authorize-security-group-ingress --group-id <security-group-id> --protocol tcp --port 22 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-id <security-group-id> --protocol tcp --port 80 --cidr 0.0.0.0/0
+9
+
+ 
+
+Step 10 - Create Key-pair
+Before we can run an instance, we need a key-pair. Run the following command to create a key pair. cli-keyPair is the name of the key and can be changed to any name. --output text is used to pipe your private key directly into a file.
+aws ec2 create-key-pair --key-name cli-keyPair --query 'KeyMaterial' --output text > cli-keyPair.pem
+If you’re using PowerShell, run the following command instead.
+aws ec2 create-key-pair --key-name cli-keyPair --query 'KeyMaterial' --output text | out-file -encoding ascii -filepath cli-keyPair.pem
+Run the following command to protect your key.
+chmod 400 cli-keyPair.pem
+ 
+
+Step 11 - Run an instance
+An ec2 instance is simply a virtual server in Amazon's Elastic Compute Cloud (EC2) used for running applications on Amazon web services infrastructure.
+
+Let’s create an instance with the following command.
+aws ec2 run-instances --image-id ami-0533f2ba8a1995cf9 --instance-type t2.micro --count 1 --subnet-id <public-subnet-id> --security-group-ids <security-group-id> --associate-public-ip-address --key-name cli-keyPair
+Add a tag to the instance created.
+aws ec2 create-tags --resources <instance-id> --tags Key=<tag-key>,Value=<tag-value>
+Before we can print the instance public DNS name, we have to enable the DNS hostname for the VPC. From the AWS console, go to VPC, click on Your VPCs, select the VPC you created from AWS CLI and click on Actions. From the dropdown, click on Edit DNS hostnames. Directly under DNS hostnames, select Enable and click on Save changes.
+
+enable vpc
+
+Print out the instance public dns name with the following command:
+aws ec2 describe-instances --instance-ids <instance-id> --query 'Reservations[].Instances[].PublicDnsName'
+ami-0533f2ba8a1995cf9 is the AMI id used in launching the instance.
+t2.micro is the instance type. You can read more about it here.
+--count is used to specify the number of instances to launch.
+
+11
+
+ 
+
+Step 12 - Start instance
+Login to the instance using:
+ssh -i "cli-keyPair.pem" ec2-user@<instance-public-dns-name>
+ec2-user is the AMI username.
+
+12
+
+[Optional]
+After login in, install the Apache web server using:
+sudo yum install httpd -y
+Start the web server with the following command:
+sudo service httpd start
+Now, let’s move into the Apache default root folder and create index.html
+cd /var/www/html
+Write into the index.html folder using any text editor of your choice. I'll be using vim.
+sudo vim index.html
+Enter any text.
+<h1>Hello there!</h1>
+Open http://public_ipv4_dns or http://public_ipv4 on your browser to verify it.
+
+browser
+
+You can learn more AWS CLI commands from this guide.
+
+If you found this article helpful, please leave a heart or a comment. If you have any questions, please let me know in the comment section.
+
+Also, don’t forget to follow me for more articles. Thank you.
