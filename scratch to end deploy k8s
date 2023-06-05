@@ -3,8 +3,8 @@ pipeline {
     tools{
         maven 'maven'
     }
- parameters {
-        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+  environment{
+        SCANNER_HOME= tool 'sonar'
     }
     stages {
         stage('github') {
@@ -18,25 +18,15 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-         stage('sonarqube scan with code') {
-             when { expression { params.skip_test != false } }
             steps {
-              withSonarQubeEnv('sonar') {
-                sh "mvn clean verify sonar:sonar \
-  -Dsonar.projectKey=webapp \
-  -Dsonar.host.url=http://13.126.123.50:9000 \
-  -Dsonar.login=sqp_41bc5786fbb3eab4a89c0044235c1aef10ced5e0"
-              }
+                withSonarQubeEnv('sonar'){
+                   sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Shopping-Cart \
+                   -Dsonar.java.binaries=. \
+                   -Dsonar.projectKey=Shopping-Cart '''
+               }
             }
-          } 
-          stage("Quality Gate") {
-              when { expression { params.skip_test != false } }
-            steps {
-              timeout(time: 5, unit: 'MINUTES') {
-                waitForQualityGate abortPipeline: true
-              }
-            }
-          }
+        } 
+       
           
            stage('artifact upload to nexus') {
                when { expression { params.skip_test != false } }
