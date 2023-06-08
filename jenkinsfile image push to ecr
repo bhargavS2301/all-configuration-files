@@ -1,44 +1,46 @@
 pipeline {
     agent any
-     environment {
-         PATH ="/opt/apache-maven-3.9.1/bin:$PATH"
-        AWS_ACCOUNT_ID="261097301806"
-        AWS_DEFAULT_REGION="ap-south-1"
-        IMAGE_REPO_NAME="firstrepo"
-        IMAGE_TAG="v1"
-        REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/${IMAGE_REPO_NAME}"
+    tools{
+        maven 'maven'
     }
-
+   
+ parameters {
+        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+    }
     stages {
-         stage('Logging into AWS ECR') {
+        stage('Logging into AWS ECR') {
             steps {
                 script {
-                sh "aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+                sh "aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 455490487616.dkr.ecr.ap-south-1.amazonaws.com"
                 }
                  
             }
         }
-          stage('github') {
+        stage('checkout') {
             steps {
                 git 'https://github.com/bharah08/CI-CD-using-Docker.git'
             }
         }
-          stage('maven build') {
+           stage('build package') {
+               when { expression { params.skip_test != false } }
+               
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean install'
             }
         }
-        stage('build the image') {
+           stage('build docker image') {
+         
             steps {
-                sh 'docker build -t firstrepo .'
-                sh 'docker tag firstrepo:latest 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+                sh 'docker build -t test .'
+sh 'docker tag test:latest 455490487616.dkr.ecr.ap-south-1.amazonaws.com/test:latest'
             }
-        }
-        
-           stage('push image to ecr') {
+        } 
+           stage('docker image push') {
+         
             steps {
-            sh 'docker push 261097301806.dkr.ecr.ap-south-1.amazonaws.com/firstrepo:latest'
+sh 'docker push 455490487616.dkr.ecr.ap-south-1.amazonaws.com/test:latest'
             }
-        }  
+        } 
+       
     }
 }
