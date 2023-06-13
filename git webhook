@@ -1,0 +1,8 @@
+copy the jenkins urlpath 
+
+go to git settings and sel on git webhook
+paste the jenkins url on git playload url and enter /git-webhook/ after url
+
+select json type and save it.
+
+Now whenever changes made in git automatically job will be triggered in jenkins.
